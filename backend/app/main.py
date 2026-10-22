@@ -1,15 +1,24 @@
 import requests
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.schemas import ArticleRequest, AnalysisResponse
 from app.services.article_fetcher import extract_article_text
 
+from app.services.text_preprocessor import preprocess_article
+from app.services.news_search import search_news
 app = FastAPI(
     title="NewsChecker API",
     description="Backend for the News Bias and Fake News Detection Platform",
     version="0.1.0",
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
@@ -28,7 +37,8 @@ def health_check():
 def analyze_article(request: ArticleRequest):
     content = request.content.strip()
     article_title = None
-
+    related_news = []
+    
     if request.mode == "url":
         try:
             article = extract_article_text(content)
@@ -45,10 +55,37 @@ def analyze_article(request: ArticleRequest):
                 detail=str(exc),
             ) from exc
 
+    
     elif request.mode == "topic":
-        raise HTTPException(
-            status_code=501,
-            detail="Topic search will be implemented in a later step.",
+        try:
+            
+            related_news = search_news(content)
+            
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail="News search is not configured or failed.",
+            ) from exc
+        except requests.RequestException as exc:
+            raise HTTPException(
+                status_code=502,
+                detail="The news service could not be reached.",
+            ) from exc
+        content=None
+
+    if request.mode in ("text", "url"):
+        content = preprocess_article(content)
+
+    if request.mode == "topic":
+        message = (
+            f"Found {len(related_news)} articles for the topic "
+            f"'{request.content.strip()}'. "
+            "Bias analysis and fact-checking are not connected yet."
+        )
+    else:
+        message = (
+            "Article text received successfully. "
+            "Real bias analysis and fact-checking are not connected yet."
         )
 
     return AnalysisResponse(
@@ -68,9 +105,6 @@ def analyze_article(request: ArticleRequest):
             ),
             "sources": [],
         },
-        related_news=[],
-        message=(
-            "Article text received successfully. "
-            "Real bias analysis and fact-checking are not connected yet."
-        ),
+        related_news=related_news,
+        message=message,
     )

@@ -41,6 +41,7 @@ class NewsItem(BaseModel):
     url: str
     source: str | None = None
     published_at: str | None = None
+    description: str | None = None
 
 
 class AnalysisResponse(BaseModel):
