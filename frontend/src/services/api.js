@@ -28,3 +28,23 @@ export async function searchNews(topic) {
 
   return response.json()
 }
+
+export async function analyzeArticle(url) {
+  const response = await fetch(`${API_BASE_URL}/analyze`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      mode: 'url',
+      content: url,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Could not analyze this article. Please try again.')
+  }
+
+  return response.json()
+}
+

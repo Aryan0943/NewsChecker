@@ -4,6 +4,7 @@ import './App.css'
 import { searchNews } from './services/api'
 import ArticleCard from './components/ArticleCard'
 import SearchForm from './components/SearchForm'
+import NewsResults from './components/NewsResults'
 function App() {
   // Store the topic entered by the user.
   const [topic, setTopic] = useState('')
@@ -68,23 +69,12 @@ function App() {
         />
                 
         
-    <section className="results">
-      <h2>News Results</h2>
-
-      {isLoading && <p>Searching for articles...</p>}
-
-      {error && <p role="alert">{error}</p>}
-
-      {!isLoading && !error && hasSearched && articles.length === 0 && (
-        <p>No articles found. Try a different topic.</p>
-      )}
-
-      {!isLoading && !error && articles.length > 0 && (
-        articles.map((article) => (
-          <ArticleCard key={article.url} article={article} />
-        ))
-      )}
-    </section>
+    <NewsResults
+      articles={articles}
+      isLoading={isLoading}
+      error={error}
+      hasSearched={hasSearched}
+    />
 
 
       </main>
