@@ -1,36 +1,49 @@
 
 import { useState } from 'react'
 import './App.css'
-
+import { searchNews } from './services/api'
+import ArticleCard from './components/ArticleCard'
+import SearchForm from './components/SearchForm'
 function App() {
   // Store the topic entered by the user.
   const [topic, setTopic] = useState('')
   const [articles, setArticles] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [hasSearched, setHasSearched] = useState(false)
 
   // Handle search form submission.
   async function handleSearch(event) {
-    if (!topic.trim()) {
+    
+    event.preventDefault()
+    const searchTopic = topic.trim()
+    if (!searchTopic) {
+      setError('Please enter a topic to search.')
+      setArticles([])
+      setHasSearched(false)
       return
     }
-    event.preventDefault()
-
+    setIsLoading(true)
+    setError('')
+    setHasSearched(true)
+    setArticles([])
     
-    const response = await fetch('http://127.0.0.1:8000/analyze', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        mode: 'topic',
-        content: topic,
-      }),
-    })
+    try {
 
-    const data = await response.json()
-    setArticles(data.related_news ?? [])
-    
+      const data = await searchNews(searchTopic)
+      setArticles(data.related_news ?? [])
 
-  }
+    } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not connect to the backend.'
+        )
+      } finally {
+        setIsLoading(false)
+      }
+
+}
 
   return (
     <div className="app">
@@ -47,43 +60,32 @@ function App() {
           and examine different perspectives.
         </p>
 
-        <form className="search-form" onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Enter a topic, e.g. climate change"
-            aria-label="News topic"
-            value={topic}
-            onChange={(event) => setTopic(event.target.value)}
-          />
-
-          <button type="submit">
-            Search News
-          </button>
-        </form>
+        <SearchForm
+          topic={topic}
+          setTopic={setTopic}
+          onSearch={handleSearch}
+          isLoading={isLoading}
+        />
+                
         
-        <section className="results">
-          <h2>News Results</h2>
+    <section className="results">
+      <h2>News Results</h2>
 
-          {articles.length === 0 ? (
-            <p>No articles to display yet. Search for a topic above.</p>
-          ) : (
-            articles.map((article) => (
-              <article key={article.url} className="article-card">
-                <h3>{article.title}</h3>
+      {isLoading && <p>Searching for articles...</p>}
 
-                <p>Source: {article.source || 'Unknown source'}</p>
+      {error && <p role="alert">{error}</p>}
 
-                <p>
-                  Published: {article.published_at || 'Date unavailable'}
-                </p>
+      {!isLoading && !error && hasSearched && articles.length === 0 && (
+        <p>No articles found. Try a different topic.</p>
+      )}
 
-                <a href={article.url} target="_blank" rel="noreferrer">
-                  Read article
-                </a>
-              </article>
-            ))
-          )}
-        </section>
+      {!isLoading && !error && articles.length > 0 && (
+        articles.map((article) => (
+          <ArticleCard key={article.url} article={article} />
+        ))
+      )}
+    </section>
+
 
       </main>
     </div>

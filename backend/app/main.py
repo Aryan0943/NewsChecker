@@ -1,17 +1,17 @@
-import requests
-from fastapi import FastAPI, HTTPException
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.schemas import ArticleRequest, AnalysisResponse
-from app.services.article_fetcher import extract_article_text
+from app.api.routes.analysis import router as analysis_router
 
-from app.services.text_preprocessor import preprocess_article
-from app.services.news_search import search_news
+
 app = FastAPI(
     title="NewsChecker API",
-    description="Backend for the News Bias and Fake News Detection Platform",
+    description="Backend for the News Bias and Fact-Check Platform",
     version="0.1.0",
 )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -19,6 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def home():
@@ -33,78 +34,4 @@ def health_check():
     return {"status": "healthy"}
 
 
-@app.post("/analyze", response_model=AnalysisResponse)
-def analyze_article(request: ArticleRequest):
-    content = request.content.strip()
-    article_title = None
-    related_news = []
-    
-    if request.mode == "url":
-        try:
-            article = extract_article_text(content)
-            content = article["text"]
-            article_title = article["title"]
-        except requests.RequestException as exc:
-            raise HTTPException(
-                status_code=502,
-                detail="The article website could not be reached.",
-            ) from exc
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=str(exc),
-            ) from exc
-
-    
-    elif request.mode == "topic":
-        try:
-            
-            related_news = search_news(content)
-            
-        except RuntimeError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail="News search is not configured or failed.",
-            ) from exc
-        except requests.RequestException as exc:
-            raise HTTPException(
-                status_code=502,
-                detail="The news service could not be reached.",
-            ) from exc
-        content=None
-
-    if request.mode in ("text", "url"):
-        content = preprocess_article(content)
-
-    if request.mode == "topic":
-        message = (
-            f"Found {len(related_news)} articles for the topic "
-            f"'{request.content.strip()}'. "
-            "Bias analysis and fact-checking are not connected yet."
-        )
-    else:
-        message = (
-            "Article text received successfully. "
-            "Real bias analysis and fact-checking are not connected yet."
-        )
-
-    return AnalysisResponse(
-        mode=request.mode,
-        article_title=article_title,
-        article_text=content,
-        biases=[
-            {"category": "political", "status": "pending"},
-            {"category": "gender", "status": "pending"},
-            {"category": "communal/caste", "status": "pending"},
-            {"category": "cultural", "status": "pending"},
-        ],
-        fact_check={
-            "status": "pending",
-            "summary": (
-                "Automated fact verification has not been implemented yet."
-            ),
-            "sources": [],
-        },
-        related_news=related_news,
-        message=message,
-    )
+app.include_router(analysis_router)
