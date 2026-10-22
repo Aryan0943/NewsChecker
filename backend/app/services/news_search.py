@@ -1,17 +1,12 @@
 
-import os
+
 import re
 import requests
-from dotenv import load_dotenv
+from app.core.config import NEWS_API_KEY, NEWS_API_URL
 
 from app.schemas import NewsItem
 
 
-# Load configuration from backend/.env
-load_dotenv()
-
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-NEWS_API_URL = "https://newsapi.org/v2/everything"
 
 
 def search_news(topic: str, page_size: int = 10) -> list[NewsItem]:
