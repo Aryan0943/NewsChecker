@@ -68,13 +68,45 @@ function ArticleCard({ article }) {
             </p>
           )}
 
-          <p>
-            Bias analysis: {analysis.biases?.[0]?.status || 'pending'}
-          </p>
+          
+          <section className="bias-results">
+            <h5>Bias Analysis</h5>
 
-          <p>
-            Fact-checking: {analysis.fact_check?.status || 'pending'}
-          </p>
+            {analysis.biases?.length > 0 ? (
+              analysis.biases.map((bias) => (
+                <p key={bias.category}>
+                  <strong>{bias.category}:</strong> {bias.status}
+                  {bias.score != null && ` (Score: ${bias.score})`}
+                  {bias.explanation && ` — ${bias.explanation}`}
+                </p>
+              ))
+            ) : (
+              <p>No bias results available yet.</p>
+            )}
+          </section>
+
+          <section className="fact-check-results">
+            <h5>Fact-Check</h5>
+
+            <p>
+              <strong>Status:</strong>{' '}
+              {analysis.fact_check?.status || 'pending'}
+            </p>
+
+            <p>
+              {analysis.fact_check?.summary ||
+                'Automated fact verification is not implemented yet.'}
+            </p>
+
+            {analysis.fact_check?.sources?.length > 0 && (
+              <ul>
+                {analysis.fact_check.sources.map((source, index) => (
+                  <li key={`${source}-${index}`}>{source}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+
         </section>
       )}
     </article>

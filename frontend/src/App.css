@@ -182,3 +182,150 @@
     border-right-color: var(--border);
   }
 }
+
+/* Article analysis results */
+.article-analysis {
+  margin-top: 24px;
+  padding: 20px;
+  text-align: left;
+  background: #20232b;
+  border: 1px solid #3a414d;
+  border-radius: 12px;
+}
+
+.article-analysis h4 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  text-align: center;
+  color: #f1f5f9;
+}
+
+.bias-results,
+.fact-check-results {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #171a21;
+}
+
+.bias-results h5,
+.fact-check-results h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #93c5fd;
+  font-size: 17px;
+}
+
+.bias-results p,
+.fact-check-results p {
+  margin: 10px 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.fact-check-results ul {
+  padding-left: 22px;
+}
+
+.fact-check-results li {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+
+/* News article cards */
+.article-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px;
+  margin: 20px 0;
+  text-align: left;
+  background: #20232b;
+  border: 1px solid #3a414d;
+  border-radius: 14px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.article-card:hover {
+  border-color: #60a5fa;
+  transform: translateY(-2px);
+}
+
+.article-card h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #f1f5f9;
+  line-height: 1.5;
+}
+
+.article-card p {
+  color: #b8c2d1;
+  line-height: 1.6;
+}
+
+.article-card a {
+  display: inline-block;
+  margin: 8px 0 14px;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.article-card a:hover {
+  color: #bfdbfe;
+}
+
+.article-card button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 7px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.article-card button:hover {
+  background: #1d4ed8;
+}
+
+.article-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .article-card {
+    padding: 16px;
+    margin: 14px 0;
+  }
+
+  .article-card h3 {
+    font-size: 18px;
+  }
+
+  .article-analysis {
+    padding: 14px;
+  }
+
+  .bias-results,
+  .fact-check-results {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-card button {
+    width: 100%;
+  }
+
+  .article-card a {
+    overflow-wrap: anywhere;
+  }
+
+  .article-analysis {
+    font-size: 14px;
+  }
+}
+
+
