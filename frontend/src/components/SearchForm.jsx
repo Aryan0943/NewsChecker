@@ -9,6 +9,7 @@ function SearchForm({
     <form className="search-form" onSubmit={onSearch}>
       <input
         type="text"
+        required
         placeholder="Enter a topic, e.g. climate change"
         aria-label="News topic"
         value={topic}

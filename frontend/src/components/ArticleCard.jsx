@@ -28,53 +28,107 @@ function ArticleCard({ article }) {
 
   return (
     <article className="article-card">
-      <h3>{article.title}</h3>
+      <div className="article-card-header">
+        <span className="article-source">
+          {article.source || 'Unknown source'}
+        </span>
 
-      <p>Source: {article.source || 'Unknown source'}</p>
+        <span className="article-date">
+          {article.published_at || 'Date unavailable'}
+        </span>
+      </div>
 
-      <p>
-        Published: {article.published_at || 'Date unavailable'}
-      </p>
+      <h3>{article.title || 'Untitled article'}</h3>
 
-      <a href={article.url} target="_blank" rel="noreferrer">
-        Read article
-      </a>
+      <div className="article-actions">
+        <a
+          className="read-article-link"
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Read original article ↗
+        </a>
 
-      <div>
         <button
           type="button"
           onClick={handleAnalyze}
           disabled={isAnalyzing}
         >
-          {isAnalyzing ? 'Processing...' : 'Analyze Article'}
+          {isAnalyzing ? 'Analyzing...' : 'Analyze Article'}
         </button>
       </div>
 
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <div className="article-error" role="alert">
+          <strong>Analysis failed</strong>
+          <p>{error}</p>
+        </div>
+      )}
 
       {analysis && (
-        <section className="article-analysis">
-          <h4>Analysis Result</h4>
+        <section className="article-analysis" aria-live="polite">
+          <h4>Analysis Results</h4>
 
-          <p>{analysis.message}</p>
+          <p className="analysis-message">
+            {analysis.message || 'Analysis response received.'}
+          </p>
 
           {analysis.article_title && (
-            <p>Article title: {analysis.article_title}</p>
+            <p>
+              <strong>Extracted title:</strong> {analysis.article_title}
+            </p>
           )}
 
           {analysis.article_text && (
             <p>
-              Extracted text length: {analysis.article_text.length} characters
+              <strong>Extracted text:</strong>{' '}
+              {analysis.article_text.length.toLocaleString()} characters
             </p>
           )}
 
-          <p>
-            Bias analysis: {analysis.biases?.[0]?.status || 'pending'}
-          </p>
+          <div className="bias-results">
+            <h5>Bias Analysis</h5>
 
-          <p>
-            Fact-checking: {analysis.fact_check?.status || 'pending'}
-          </p>
+            {analysis.biases?.length > 0 ? (
+              analysis.biases.map((bias, index) => (
+                <div
+                  className="bias-item"
+                  key={`${bias.category || 'category'}-${index}`}
+                >
+                  <strong>{bias.category || 'Uncategorized'}</strong>
+                  <span className="status-label">
+                    {bias.status || 'pending'}
+                  </span>
+                  {bias.explanation && <p>{bias.explanation}</p>}
+                </div>
+              ))
+            ) : (
+              <p>No bias results available.</p>
+            )}
+          </div>
+
+          <div className="fact-check-results">
+            <h5>Fact-Check</h5>
+
+            <p>
+              <strong>Status:</strong>{' '}
+              {analysis.fact_check?.status || 'pending'}
+            </p>
+
+            <p>
+              {analysis.fact_check?.summary ||
+                'No fact-check summary is available.'}
+            </p>
+
+            {analysis.fact_check?.sources?.length > 0 && (
+              <ul>
+                {analysis.fact_check.sources.map((source, index) => (
+                  <li key={`${source}-${index}`}>{source}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       )}
     </article>
