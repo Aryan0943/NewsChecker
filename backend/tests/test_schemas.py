@@ -5,44 +5,32 @@ from pydantic import ValidationError
 from app.schemas import ArticleRequest
 
 
-def test_valid_text_request():
-    request = ArticleRequest(
-        mode="text",
-        content="Example news article",
-    )
-
-    assert request.mode == "text"
-    assert request.content == "Example news article"
-
-
 def test_valid_url_request():
     request = ArticleRequest(
-        mode="url",
-        content="https://example.com/news",
+        content="https://example.com/news"
     )
 
-    assert request.mode == "url"
+    assert request.content == "https://example.com/news"
 
 
-def test_invalid_mode_is_rejected():
+def test_valid_url_with_whitespace():
+    request = ArticleRequest(
+        content="  https://example.com/news  "
+    )
+
+    assert request.content == "https://example.com/news"
+
+
+@pytest.mark.parametrize(
+    "invalid_url",
+    [
+        "",
+        "Example news article",
+        "ftp://example.com/news",
+        "www.example.com/news",
+        "not-a-url",
+    ],
+)
+def test_invalid_url_request(invalid_url):
     with pytest.raises(ValidationError):
-        ArticleRequest(
-            mode="video",
-            content="Example content",
-        )
-
-
-def test_empty_content_is_rejected():
-    with pytest.raises(ValidationError):
-        ArticleRequest(
-            mode="text",
-            content="   ",
-        )
-
-
-def test_content_over_limit_is_rejected():
-    with pytest.raises(ValidationError):
-        ArticleRequest(
-            mode="text",
-            content="a" * 20001,
-        )
+        ArticleRequest(content=invalid_url)
