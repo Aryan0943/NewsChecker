@@ -1,6 +1,10 @@
+
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
+
+
+AnalysisMode = Literal["fact", "bias", "both"]
 
 
 class ArticleRequest(BaseModel):
@@ -8,6 +12,11 @@ class ArticleRequest(BaseModel):
         min_length=1,
         max_length=20000,
         description="URL of the article to analyze",
+    )
+
+    analysis_mode: AnalysisMode = Field(
+        default="both",
+        description="Select fact checking, bias checking, or both",
     )
 
     @field_validator("content")
@@ -19,7 +28,9 @@ class ArticleRequest(BaseModel):
             raise ValueError("Article URL cannot be empty.")
 
         if not value.startswith(("http://", "https://")):
-            raise ValueError("Please provide a valid HTTP or HTTPS article URL.")
+            raise ValueError(
+                "Please provide a valid HTTP or HTTPS article URL."
+            )
 
         return value
 
@@ -42,16 +53,25 @@ class EvidenceSource(BaseModel):
 
 class ClaimFactCheck(BaseModel):
     claim: str
+
     verdict: Literal[
         "supported",
         "contradicted",
         "mixed",
         "insufficient_evidence",
     ]
+
     confidence: Literal["low", "medium", "high"]
     explanation: str
-    supporting_sources: list[EvidenceSource] = Field(default_factory=list)
-    contradicting_sources: list[EvidenceSource] = Field(default_factory=list)
+
+    supporting_sources: list[EvidenceSource] = Field(
+        default_factory=list
+    )
+
+    contradicting_sources: list[EvidenceSource] = Field(
+        default_factory=list
+    )
+
     limitations: list[str] = Field(default_factory=list)
 
 
@@ -61,26 +81,32 @@ class FactCheckResult(BaseModel):
         "verified",
         "disputed",
         "unverified",
-        "claims_supported"
+        "claims_supported",
+        "mixed",
     ] = "pending"
 
     summary: str = (
         "Automated fact verification has not been completed."
     )
 
-    # Retained for compatibility with your existing frontend.
     sources: list[str] = Field(default_factory=list)
 
-    # New detailed claim-by-claim results.
-    claims: list[ClaimFactCheck] = Field(default_factory=list)
+    claims: list[ClaimFactCheck] = Field(
+        default_factory=list
+    )
 
 
 class AnalysisResponse(BaseModel):
     mode: Literal["url"] = "url"
+
+    analysis_mode: AnalysisMode = "both"
+
     article_title: str | None = None
     article_text: str | None = None
 
-    biases: list[BiasResult] = Field(default_factory=list)
+    biases: list[BiasResult] = Field(
+        default_factory=list
+    )
 
     fact_check: FactCheckResult = Field(
         default_factory=FactCheckResult

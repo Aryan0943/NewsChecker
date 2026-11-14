@@ -174,6 +174,7 @@ function App() {
   const [analysis, setAnalysis] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [selectedMode, setSelectedMode] = useState('both')
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -197,7 +198,7 @@ function App() {
     setAnalysis(null)
 
     try {
-      const data = await analyzeArticle(articleUrl)
+      const data = await analyzeArticle(articleUrl, selectedMode)
       setAnalysis(data)
     } catch (err) {
       setError(
@@ -262,6 +263,54 @@ function App() {
             Analyze news articles, examine factual claims, and explore
             the evidence behind every verdict.
           </p>
+
+          <div className="mode-selector">
+            <div className="mode-heading">
+              <span className="section-eyebrow">CHOOSE ANALYSIS MODE</span>
+              <p>Select what you want NewsChecker to examine.</p>
+            </div>
+
+            <div className="mode-options">
+              {[
+                {
+                  id: 'fact',
+                  icon: '✓',
+                  title: 'Fact Checking',
+                  description: 'Verify claims using external evidence.',
+                },
+                {
+                  id: 'bias',
+                  icon: '◈',
+                  title: 'Bias Checking',
+                  description: 'Examine language, framing and potential bias.',
+                },
+                {
+                  id: 'both',
+                  icon: '✦',
+                  title: 'Both',
+                  description: 'Run both analyses together.',
+                },
+              ].map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`mode-option ${
+                    selectedMode === option.id ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedMode(option.id)}
+                  disabled={isLoading}
+                  aria-pressed={selectedMode === option.id}
+                >
+                  <span className="mode-icon">{option.icon}</span>
+                  <span className="mode-title">{option.title}</span>
+                  <span className="mode-description">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
 
           <form className="search-form" onSubmit={handleSubmit}>
             <div className="url-input-wrap">
