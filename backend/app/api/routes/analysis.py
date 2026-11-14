@@ -189,22 +189,24 @@ def analyze_article(request: ArticleRequest):
         print("\nClaims passed to fact checker:", len(claims))
         print("======================================\n")
 
+        
         # --------------------------------------
         # 4C. Retrieve and evaluate evidence
         # --------------------------------------
 
         claim_results = []
 
-        try:
-            for index, claim_obj in enumerate(claims, start=1):
+        for index, claim_obj in enumerate(claims, start=1):
 
-                claim_text = claim_obj.claim_text
+            claim_text = claim_obj.claim_text
 
-                print(
-                    f"\nFact-checking claim {index}/{len(claims)}:"
-                )
-                print(claim_text)
+            print(
+                f"\nFact-checking claim {index}/{len(claims)}:"
+            )
+            print(claim_text)
 
+            try:
+                # Retrieve evidence for this claim
                 evidence = search_evidence(
                     claim=claim_text,
                     max_results=5,
@@ -216,11 +218,13 @@ def analyze_article(request: ArticleRequest):
                     len(evidence) if evidence else 0,
                 )
 
+                # Analyze source relationships
                 source_analysis = analyze_sources(
                     evidence,
                     original_article_url=article_url,
                 )
 
+                # Evaluate evidence using Gemini
                 evaluation = evaluate_evidence(
                     claim=claim_text,
                     evidence=source_analysis["sources"],
@@ -266,30 +270,38 @@ def analyze_article(request: ArticleRequest):
 
                 print("Verdict:", claim_result.verdict)
 
-        except (
-            gemini_errors.APIError,
-            RuntimeError,
-            ValueError,
-        ) as exc:
-            logger.exception("Evidence pipeline error.")
+            except Exception as exc:
+                # Failure of one claim must not stop other claims.
+                logger.exception(
+                    "Failed to evaluate claim %s: %s",
+                    index,
+                    claim_text,
+                )
 
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    "Evidence retrieval or Gemini evaluation failed. "
-                    "Please try again."
-                ),
-            ) from exc
+                failed_claim_result = ClaimFactCheck(
+                    claim=claim_text,
+                    verdict="insufficient_evidence",
+                    confidence="low",
+                    explanation=(
+                        "This claim could not be evaluated because "
+                        "an error occurred during evidence retrieval "
+                        "or evaluation. No reliable verdict is available."
+                    ),
+                    supporting_sources=[],
+                    contradicting_sources=[],
+                    limitations=[
+                        "Evaluation failed for this claim. "
+                        "Other claims were processed independently.",
+                        f"Error type: {type(exc).__name__}",
+                    ],
+                )
 
-        except Exception as exc:
-            logger.exception("Unexpected fact-checking error.")
+                claim_results.append(failed_claim_result)
 
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    "An unexpected error occurred during fact-checking."
-                ),
-            ) from exc
+                print(
+                    f"Claim {index} failed. "
+                    "Continuing with the remaining claims."
+                )
 
         # --------------------------------------
         # 4D. Calculate overall verdict
