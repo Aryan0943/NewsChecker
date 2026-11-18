@@ -53,7 +53,46 @@ def get_error_biases():
     ]
 
 
+def aggregate_claim_verdicts(claim_results):
+    verdicts = [result.verdict for result in claim_results]
+
+    supported_count = verdicts.count("supported")
+    contradicted_count = verdicts.count("contradicted")
+    mixed_count = verdicts.count("mixed")
+    insufficient_count = verdicts.count("insufficient_evidence")
+
+    total_claims = len(claim_results)
+
+    if total_claims == 0:
+        overall_status = "unverified"
+        summary = (
+            "No claims passed the article-grounding "
+            "and checkability checks."
+        )
+    elif supported_count > 0 and contradicted_count > 0:
+        overall_status = "mixed"
+    elif mixed_count > 0:
+        overall_status = "mixed"
+    elif contradicted_count > 0:
+        overall_status = "disputed"
+    elif supported_count == total_claims:
+        overall_status = "claims_supported"
+    else:
+        overall_status = "unverified"
+
+    if total_claims > 0:
+        summary = (
+            f"Evaluated {total_claims} claims: "
+            f"{supported_count} supported, "
+            f"{contradicted_count} contradicted, "
+            f"{mixed_count} mixed, and "
+            f"{insufficient_count} with insufficient evidence."
+        )
+
+    return overall_status, summary
+
 @router.post("/analyze", response_model=AnalysisResponse)
+
 def analyze_article(request: ArticleRequest):
 
     article_url = request.content.strip()
@@ -306,44 +345,10 @@ def analyze_article(request: ArticleRequest):
         # --------------------------------------
         # 4D. Calculate overall verdict
         # --------------------------------------
+        overall_status, summary = aggregate_claim_verdicts(
+            claim_results
+        )
 
-        verdicts = [
-            result.verdict
-            for result in claim_results
-        ]
-
-        supported_count = verdicts.count("supported")
-        contradicted_count = verdicts.count("contradicted")
-        mixed_count = verdicts.count("mixed")
-        insufficient_count = verdicts.count("insufficient_evidence")
-
-        if not claim_results:
-            overall_status = "unverified"
-            summary = (
-                "No claims passed the article-grounding "
-                "and checkability checks."
-            )
-
-        else:
-            if contradicted_count > 0 and supported_count > 0:
-                overall_status = "mixed"
-
-            elif contradicted_count > 0:
-                overall_status = "disputed"
-
-            elif supported_count == len(verdicts):
-                overall_status = "claims_supported"
-
-            else:
-                overall_status = "unverified"
-
-            summary = (
-                f"Evaluated {len(claim_results)} claims: "
-                f"{supported_count} supported, "
-                f"{contradicted_count} contradicted, "
-                f"{mixed_count} mixed, and "
-                f"{insufficient_count} with insufficient evidence."
-            )
 
         # --------------------------------------
         # 4E. Collect sources
